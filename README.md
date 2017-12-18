@@ -5,10 +5,15 @@ My aim for this repository is to be a place to experiment with various simple tr
  - install tensorflow (https://www.tensorflow.org/install/)
  - `python my-tensorflow-project.py` in a terminal that has the virtualenv activated (i.e. via `source ~/tensorflow/bin/activate`)
 
+~~simple-right-shift~~
+ - ~~simple and effective NN solves this easily~~
+ - ~~shifting more than 1 right (or left) seem to work just as easily for this binary example~~
+
+drop-every-other-and-squared
+ - not as straight-forward as the above problem, basic NN doesn't seem to work
+
+fourier-transform
+
+
 ### TODO
- - various other shifts with different numbers (shifting 2 or 5 places)
- 	- i.e. shift 2: [6, 2, 7, 1, 6, 8] -> [6, 8, 6, 2, 7, 1]
- - dropout
- 	- i.e. every other: [2, 6, 1, 3, 6, 8] -> [6, 3, 8]
- - fourier transform (a buffer is the input, and the fft is the output)
- 	- maybe one day a NN can find a better transform at listening that the fourier
+ 

@@ -9,14 +9,19 @@ import numpy as np
 import tensorflow as tf 
 from random import getrandbits
 
-# Adding these two lines because tensorflow wasn't compiled on this machine (used pip install)
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+# hyperparameters and config
+NUM_BITS = 40
+learning_rate = 0.001
+num_steps = 5000
+batch_size = 10
+display_step = 10
+num_hidden_layer_neurons = NUM_BITS ** 2
+shift = -1 # other shifts seem to work just as easily
 
 # the source of all our inputs (X) and labels (Y)
 def getRandomDataPair():
     random_binary = list(map(int, bin(getrandbits(NUM_BITS))[2:].zfill(NUM_BITS)))
-    shifted = list(map(int, random_binary[-1:] + random_binary[:-1]))
+    shifted = list(map(int, random_binary[shift:] + random_binary[:shift]))
     return [random_binary, shifted]
 
 def getBatch(size):
@@ -27,14 +32,6 @@ def getBatch(size):
         inputs.append(x_input)
         labels.append(y_label)
     return [inputs, labels]
-
-# hyperparameters and config
-NUM_BITS = 40
-learning_rate = 0.001
-num_steps = 5000
-batch_size = 10
-display_step = 10
-num_hidden_layer_neurons = NUM_BITS ** 2
 
 # building the actual computation graph
 X = tf.placeholder("float", [None, NUM_BITS])
