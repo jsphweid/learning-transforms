@@ -11,6 +11,7 @@ My aim for this repository is to be a place to experiment with various simple tr
 
 drop-every-other-and-squared
  - not as straight-forward as the above problem, basic NN doesn't seem to work
+ - seems to work better if they are zero padded len 6 -> len 6 instead of len 3
 
 fourier-transform
 

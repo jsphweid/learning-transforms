@@ -1,7 +1,7 @@
 # drop-every-other-and-squared:
-#     [5, 2, 7, 44] -> [25, 49]
-#     [0, 1, 1, 0, 0, 1, 1, 0] -> [0, 1, 0, 1]
-#     [2, 4, 22, 6, 4, 33] -> [4, 484, 16]
+#     [5, 2, 7, 44] -> [25, 0, 49, 0]
+#     [0, 1, 1, 0, 0, 1, 1, 0] -> [0, 0, 1, 0, 0, 0, 1, 0]
+#     [2, 4, 22, 6, 4, 33] -> [4, 0, 484, 0, 16, 0]
 #     etc... (except pick one length)
 
 # import important libraries
@@ -11,7 +11,7 @@ from random import randint
 
 # hyperparameters and config
 INPUT_SIZE = 6
-LABEL_SIZE = int(INPUT_SIZE / 2)
+# LABEL_SIZE = int(INPUT_SIZE / 2)
 learning_rate = 0.001
 num_steps = 5000
 batch_size = 50
@@ -25,8 +25,7 @@ def getRandomDataPair():
     for i in range(INPUT_SIZE):
         randomInt = randint(0, 4)
         input_data.append(randomInt)
-        if (i % 2 == 0):
-            label_data.append(randomInt ** 2)
+        label_data.append((randomInt ** 2) if (i % 2 == 0) else 0)
     return [input_data, label_data]
 
 def getBatch(size):
@@ -40,7 +39,7 @@ def getBatch(size):
 
 # building the actual computation graph
 X = tf.placeholder("float", [None, INPUT_SIZE])
-Y = tf.placeholder("float", [None, LABEL_SIZE])
+Y = tf.placeholder("float", [None, INPUT_SIZE])
 
 hidden1_weights = tf.Variable(tf.random_normal([INPUT_SIZE, NUM_HIDDEN_LAYER_NEURONS]))
 hidden1_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
@@ -50,8 +49,8 @@ hidden2_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, NUM_HI
 hidden2_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
 hidden2_layer = tf.matmul(hidden1_layer, hidden2_weights) + hidden2_biases
 
-output_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, LABEL_SIZE]))
-output_biases = tf.Variable(tf.random_normal([LABEL_SIZE]))
+output_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, INPUT_SIZE]))
+output_biases = tf.Variable(tf.random_normal([INPUT_SIZE]))
 output_layer = tf.matmul(hidden2_layer, output_weights) + output_biases
 
 loss_op = tf.reduce_mean(tf.square(tf.subtract(Y, output_layer)))
