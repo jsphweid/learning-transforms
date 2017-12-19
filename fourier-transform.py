@@ -37,37 +37,41 @@ def getBatch(size):
         labels.append(y_label)
     return [inputs, labels]
 
+
 # building the actual computation graph
 X = tf.placeholder("float", [None, INPUT_SIZE])
 Y = tf.placeholder("float", [None, FFT_SIZE])
 
-
 x_resized = tf.reshape(X, [-1, INPUT_SIZE, 1]) # -1 infers batch size, 2
 
-conv1_weights = tf.Variable(tf.random_normal([CONV_SIZE, 1, NUM_HIDDEN_LAYER_NEURONS]))
-conv1_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
-conv1 = tf.nn.conv1d(x_resized, conv1_weights, stride=1, padding='VALID')
-hidden1_conv1 = tf.nn.relu(conv1 + conv1_biases)
+with tf.name_scope('convolution-layer'):
+    conv1_weights = tf.Variable(tf.random_normal([CONV_SIZE, 1, NUM_HIDDEN_LAYER_NEURONS]))
+    conv1_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
+    conv1 = tf.nn.conv1d(x_resized, conv1_weights, stride=1, padding='VALID')
+    hidden1_conv1 = tf.nn.relu(conv1 + conv1_biases)
 
 SIZE_AFTER_CONV = int(INPUT_SIZE - CONV_SIZE + 1)
 NEXT_LAYER_SIZE = SIZE_AFTER_CONV * NUM_HIDDEN_LAYER_NEURONS
 
-flattened = tf.reshape(hidden1_conv1, [-1, NEXT_LAYER_SIZE])
+with tf.name_scope('flattened-after-convolution'):
+    flattened = tf.reshape(hidden1_conv1, [-1, NEXT_LAYER_SIZE])
 
-hidden1_weights = tf.Variable(tf.random_normal([NEXT_LAYER_SIZE, NUM_HIDDEN_LAYER_NEURONS]))
-hidden1_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
-hidden1_layer = tf.matmul(flattened, hidden1_weights) + hidden1_biases
-
-output_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, FFT_SIZE]))
-output_biases = tf.Variable(tf.random_normal([FFT_SIZE]))
-output_layer = tf.matmul(hidden1_layer, output_weights) + output_biases
+with tf.name_scope('output-layer'):
+    output_weights = tf.Variable(tf.random_normal([NEXT_LAYER_SIZE, FFT_SIZE]))
+    output_biases = tf.Variable(tf.random_normal([FFT_SIZE]))
+    output_layer = tf.matmul(flattened, output_weights) + output_biases
 
 loss_op = tf.reduce_mean(tf.square(tf.subtract(Y, output_layer)))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 train_op = optimizer.minimize(loss_op)
 
+tf.summary.scalar('loss_op', loss_op)
+
 # GO!
 with tf.Session() as sess:
+
+    merged = tf.summary.merge_all()
+    train_writer = tf.summary.FileWriter('/Users/josephweidinger/git/learning-transforms/logs/', sess.graph)
 
     sess.run(tf.global_variables_initializer())
 
@@ -77,7 +81,8 @@ with tf.Session() as sess:
         batch_x, batch_y = getBatch(batch_size)
 
         # run the entire graph
-        sess.run(train_op, feed_dict={X: batch_x, Y: batch_y})
+        summary, _ = sess.run([merged, train_op], feed_dict={X: batch_x, Y: batch_y})
+        train_writer.add_summary(summary, step)
 
         # occasionally print out progress
         if step % display_step == 0 or step == 1:
@@ -85,7 +90,7 @@ with tf.Session() as sess:
             print("Step " + str(step) + ", Minibatch Loss= {:.4f}".format(loss))
 
     # display a real life output
-    test_input, test_label = getBatch(1)
+    # test_input, test_label = getBatch(1)
     # print("test input is: ", test_input)
     # print("test label is: ", test_label)
     # print("actual predicted result is: ", sess.run(output_layer, feed_dict={X: test_input}))

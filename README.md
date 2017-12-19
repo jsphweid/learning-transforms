@@ -17,3 +17,6 @@ fourier-transform
  - first thought is that this is very possible. With a basic NN, the loss was significantly reduced
  - update: a single convolutional layer seems to do well
  - my long term goal is to -- in a larger NN that recognizes -- see what kind of transforms a NN can learn that helps it recognizes instruments or whatever... maybe the Fourier is not the best...
+
+Running some of these will produces logs in /logs
+The graph can be visualized with tensorboard by running `tensorboard --logdir=./logs` and going to the site it tells you to.
