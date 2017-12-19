@@ -14,6 +14,7 @@ drop-every-other-and-squared
  - seems to work better if they are zero padded len 6 -> len 6 instead of len 3
 
 fourier-transform
+ - first thought is that this is very possible. With a basic NN, the loss was significantly reduced
 
 
 ### TODO

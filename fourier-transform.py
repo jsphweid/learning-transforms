@@ -1,32 +1,31 @@
-# drop-every-other-and-squared:
-#     [5, 2, 7, 44] -> [25, 49]
-#     [0, 1, 1, 0, 0, 1, 1, 0] -> [0, 1, 0, 1]
-#     [2, 4, 22, 6, 4, 33] -> [4, 484, 16]
-#     etc... (except pick one length)
+# can a NN learn the fourier transform...
+# specifically, can it learn abs(fft(timeDomainSignal))
+# if it learns from a "random signal", which is white noise, then the fft won't be anything specially, but still relevant?
+
 
 # import important libraries
 import numpy as np
 import tensorflow as tf 
-from random import randint
+import random
+from scipy.fftpack import fft
 
 # hyperparameters and config
-INPUT_SIZE = 6
-LABEL_SIZE = int(INPUT_SIZE / 2)
-learning_rate = 0.001
-num_steps = 5000
-batch_size = 50
+INPUT_SIZE = 32
+FFT_SIZE = int(INPUT_SIZE / 2)
+learning_rate = 0.01
+num_steps = 50000
+batch_size = 5
 display_step = 10
-NUM_HIDDEN_LAYER_NEURONS = 1024
+NUM_HIDDEN_LAYER_NEURONS = 128
+CONV_SIZE = 31
 
 # the source of all our inputs (X) and labels (Y)
 def getRandomDataPair():
     input_data = []
     label_data = []
     for i in range(INPUT_SIZE):
-        randomInt = randint(0, 4)
-        input_data.append(randomInt)
-        if (i % 2 == 0):
-            label_data.append(randomInt ** 2)
+        input_data.append(random.uniform(-1, 1))
+    label_data = abs(fft(input_data))[0:FFT_SIZE]
     return [input_data, label_data]
 
 def getBatch(size):
@@ -40,19 +39,28 @@ def getBatch(size):
 
 # building the actual computation graph
 X = tf.placeholder("float", [None, INPUT_SIZE])
-Y = tf.placeholder("float", [None, LABEL_SIZE])
+Y = tf.placeholder("float", [None, FFT_SIZE])
 
-hidden1_weights = tf.Variable(tf.random_normal([INPUT_SIZE, NUM_HIDDEN_LAYER_NEURONS]))
+
+x_resized = tf.reshape(X, [-1, INPUT_SIZE, 1]) # -1 infers batch size, 2
+
+conv1_weights = tf.Variable(tf.random_normal([CONV_SIZE, 1, NUM_HIDDEN_LAYER_NEURONS]))
+conv1_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
+conv1 = tf.nn.conv1d(x_resized, conv1_weights, stride=1, padding='VALID')
+hidden1_conv1 = tf.nn.relu(conv1 + conv1_biases)
+
+SIZE_AFTER_CONV = int(INPUT_SIZE - CONV_SIZE + 1)
+NEXT_LAYER_SIZE = SIZE_AFTER_CONV * NUM_HIDDEN_LAYER_NEURONS
+
+flattened = tf.reshape(hidden1_conv1, [-1, NEXT_LAYER_SIZE])
+
+hidden1_weights = tf.Variable(tf.random_normal([NEXT_LAYER_SIZE, NUM_HIDDEN_LAYER_NEURONS]))
 hidden1_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
-hidden1_layer = tf.matmul(X, hidden1_weights) + hidden1_biases
+hidden1_layer = tf.matmul(flattened, hidden1_weights) + hidden1_biases
 
-hidden2_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, NUM_HIDDEN_LAYER_NEURONS]))
-hidden2_biases = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS]))
-hidden2_layer = tf.matmul(hidden1_layer, hidden2_weights) + hidden2_biases
-
-output_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, LABEL_SIZE]))
-output_biases = tf.Variable(tf.random_normal([LABEL_SIZE]))
-output_layer = tf.matmul(hidden2_layer, output_weights) + output_biases
+output_weights = tf.Variable(tf.random_normal([NUM_HIDDEN_LAYER_NEURONS, FFT_SIZE]))
+output_biases = tf.Variable(tf.random_normal([FFT_SIZE]))
+output_layer = tf.matmul(hidden1_layer, output_weights) + output_biases
 
 loss_op = tf.reduce_mean(tf.square(tf.subtract(Y, output_layer)))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -78,7 +86,7 @@ with tf.Session() as sess:
 
     # display a real life output
     test_input, test_label = getBatch(1)
-    print("test input is: ", test_input)
-    print("test label is: ", test_label)
-    print("actual predicted result is: ", sess.run(output_layer, feed_dict={X: test_input}))
+    # print("test input is: ", test_input)
+    # print("test label is: ", test_label)
+    # print("actual predicted result is: ", sess.run(output_layer, feed_dict={X: test_input}))
 
