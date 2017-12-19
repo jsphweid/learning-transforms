@@ -71,7 +71,7 @@ tf.summary.scalar('loss_op', loss_op)
 with tf.Session() as sess:
 
     merged = tf.summary.merge_all()
-    train_writer = tf.summary.FileWriter('/Users/josephweidinger/git/learning-transforms/logs/', sess.graph)
+    train_writer = tf.summary.FileWriter('./logs/', sess.graph)
 
     sess.run(tf.global_variables_initializer())
 
